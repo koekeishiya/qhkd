@@ -381,28 +381,28 @@ add_hotkeys :: () {
         }
     });
 
-    #insert #run multi_bind("window\x00--focus",
-                            .[.{"west",    Mod_Alt, kVK_ANSI_H},
-                              .{"south",   Mod_Alt, kVK_ANSI_J},
-                              .{"north",   Mod_Alt, kVK_ANSI_K},
-                              .{"east",    Mod_Alt, kVK_ANSI_L},
-                              .{"recent",  Mod_Alt, kVK_ANSI_X},
+    #insert #run multi_bind("window\x00--focus", .[
+                                .{"west",    Mod_Alt, kVK_ANSI_H},
+                                .{"south",   Mod_Alt, kVK_ANSI_J},
+                                .{"north",   Mod_Alt, kVK_ANSI_K},
+                                .{"east",    Mod_Alt, kVK_ANSI_L},
+                                .{"recent",  Mod_Alt, kVK_ANSI_X},
                             ]);
 
-    #insert #run multi_bind("window\x00--swap",
-                            .[.{"west",   Mod_Shift|Mod_Alt, kVK_ANSI_H},
-                              .{"south",  Mod_Shift|Mod_Alt, kVK_ANSI_J},
-                              .{"north",  Mod_Shift|Mod_Alt, kVK_ANSI_K},
-                              .{"east",   Mod_Shift|Mod_Alt, kVK_ANSI_L},
-                              .{"recent", Mod_Shift|Mod_Alt, kVK_ANSI_X},
+    #insert #run multi_bind("window\x00--swap", .[
+                                .{"west",   Mod_Shift|Mod_Alt, kVK_ANSI_H},
+                                .{"south",  Mod_Shift|Mod_Alt, kVK_ANSI_J},
+                                .{"north",  Mod_Shift|Mod_Alt, kVK_ANSI_K},
+                                .{"east",   Mod_Shift|Mod_Alt, kVK_ANSI_L},
+                                .{"recent", Mod_Shift|Mod_Alt, kVK_ANSI_X},
                             ]);
 
-    #insert #run multi_bind("window\x00--warp",
-                            .[.{"west",   Mod_Shift|Mod_Cmd, kVK_ANSI_H},
-                              .{"south",  Mod_Shift|Mod_Cmd, kVK_ANSI_J},
-                              .{"north",  Mod_Shift|Mod_Cmd, kVK_ANSI_K},
-                              .{"east",   Mod_Shift|Mod_Cmd, kVK_ANSI_L},
-                              .{"recent", Mod_Shift|Mod_Cmd, kVK_ANSI_X},
+    #insert #run multi_bind("window\x00--warp", .[
+                                .{"west",   Mod_Shift|Mod_Cmd, kVK_ANSI_H},
+                                .{"south",  Mod_Shift|Mod_Cmd, kVK_ANSI_J},
+                                .{"north",  Mod_Shift|Mod_Cmd, kVK_ANSI_K},
+                                .{"east",   Mod_Shift|Mod_Cmd, kVK_ANSI_L},
+                                .{"recent", Mod_Shift|Mod_Cmd, kVK_ANSI_X},
                             ]);
 
     array_add(*hotkeys, .{
