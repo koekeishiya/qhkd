@@ -67,19 +67,21 @@ yabai :: (message: string) -> (success: bool, response: string) {
     sb: String_Builder;
     sb.allocator = temp;
 
+    result := true;
     while true {
         rsp: [255]u8;
         bytes_read := read(fd, rsp.data, rsp.count-1);
         if bytes_read <= 0 break;
 
         if (rsp[0] == YABAI_MSG_FAILURE[0]) {
+            result = false;
             append(*sb, rsp.data+1, bytes_read-1);
         } else {
             append(*sb, rsp.data, bytes_read);
         }
     }
 
-    return true, builder_to_string(*sb);
+    return result, builder_to_string(*sb);
 }
 
 shell :: inline (command: string) {
@@ -333,10 +335,25 @@ event_tap_begin :: () -> success: bool {
     return result;
 }
 
-Yabai_Bind :: struct {
-    selector: string;
-    flags:    u64;
-    key:      u16;
+bind :: (action: string, flags: u64, key: u16) -> string {
+    s := #string DONE
+    array_add(*hotkeys, .{
+        key    = %,
+        flags  = %,
+        action = () {
+            %
+        }
+    });
+    DONE
+    return tprint(s, key, flags, action);
+}
+
+shell_bind :: (command: string, flags: u64, key: u16) -> string {
+    return bind(tprint("shell(\"%\");", command), flags, key);
+}
+
+yabai_bind :: (command: string, flags: u64, key: u16) -> string {
+    return bind(tprint("yabai(\"%\");", command), flags, key);
 }
 
 yabai_bind :: (command: string, mb: []Yabai_Bind) -> string {
@@ -358,42 +375,41 @@ yabai_bind :: (command: string, mb: []Yabai_Bind) -> string {
     return builder_to_string(*sb);
 }
 
-yabai_bind :: (command: string, flags: u64, key: u16) -> string {
-    s := #string DONE
-    array_add(*hotkeys, .{
-        key    = %,
-        flags  = %,
-        action = () {
-            yabai("%");
-        }
-    });
-    DONE
-    return tprint(s, key, flags, command);
-}
-
-shell_bind :: (command: string, flags: u64, key: u16) -> string {
-    s := #string DONE
-    array_add(*hotkeys, .{
-        key    = %,
-        flags  = %,
-        action = () {
-            shell("%");
-        }
-    });
-    DONE
-    return tprint(s, key, flags, command);
+Yabai_Bind :: struct {
+    selector: string;
+    flags:    u64;
+    key:      u16;
 }
 
 Hotkey :: struct {
-    key:   u16;
-    flags: u64;
+    key:    u16;
+    flags:  u64;
     action: #type () -> ();
 } hotkeys: [..]Hotkey;
 
 add_hotkeys :: () {
     #insert #run shell_bind("kitty --single-instance -d ~ &> /dev/null", Mod_Cmd, kVK_Return);
-
     #insert #run shell_bind("screencapture -i -c", Mod_Shift|Mod_Cmd, kVK_ANSI_S);
+
+    #insert #run bind(#string DONE
+        success, rsp := yabai("window\x00--toggle\x00music");
+        if !success shell("open -a Music");
+    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_M);
+
+    #insert #run bind(#string DONE
+        success, rsp := yabai("window\x00--toggle\x00spotify");
+        if !success shell("open -a Spotify");
+    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_S);
+
+    #insert #run bind(#string DONE
+        success, rsp := yabai("window\x00--toggle\x00discord");
+        if !success shell("open -a Discord");
+    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_D);
+
+    #insert #run bind(#string DONE
+        success, rsp := yabai("window\x00--toggle\x00transmission");
+        if !success shell("open -a Transmission");
+    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_T);
 
     #insert #run yabai_bind("window\x00--focus", .[
                                 .{"west",    Mod_Alt, kVK_ANSI_H},
@@ -419,10 +435,53 @@ add_hotkeys :: () {
                                 .{"recent", Mod_Shift|Mod_Cmd, kVK_ANSI_X},
                             ]);
 
+    #insert #run yabai_bind("window\x00--insert", .[
+                                .{"west",   Mod_Control|Mod_Alt, kVK_ANSI_H},
+                                .{"south",  Mod_Control|Mod_Alt, kVK_ANSI_J},
+                                .{"north",  Mod_Control|Mod_Alt, kVK_ANSI_K},
+                                .{"east",   Mod_Control|Mod_Alt, kVK_ANSI_L},
+                                .{"stack",  Mod_Control|Mod_Alt, kVK_ANSI_I},
+                            ]);
+
+    #insert #run yabai_bind("window\x00--grid", .[
+                                .{"1:1:0:0:1:1", Mod_Shift|Mod_Alt|Mod_Fn, kVK_UpArrow},
+                                .{"1:2:0:0:1:1", Mod_Shift|Mod_Alt|Mod_Fn, kVK_LeftArrow},
+                                .{"1:2:1:0:1:1", Mod_Shift|Mod_Alt|Mod_Fn, kVK_RightArrow},
+                                .{"6:6:1:1:4:4", Mod_Shift|Mod_Alt|Mod_Fn, kVK_DownArrow},
+                            ]);
+
+    #insert #run yabai_bind("window\x00--space", .[
+                                .{"recent\x00--focus", Mod_Shift|Mod_Cmd, kVK_ANSI_X},
+                                .{"prev\x00--focus",   Mod_Shift|Mod_Cmd, kVK_ANSI_Z},
+                                .{"next\x00--focus",   Mod_Shift|Mod_Cmd, kVK_ANSI_C},
+                                .{"1\x00--focus",      Mod_Shift|Mod_Cmd, kVK_ANSI_1},
+                                .{"2\x00--focus",      Mod_Shift|Mod_Cmd, kVK_ANSI_2},
+                                .{"3\x00--focus",      Mod_Shift|Mod_Cmd, kVK_ANSI_3},
+                                .{"4\x00--focus",      Mod_Shift|Mod_Cmd, kVK_ANSI_4},
+                                .{"5\x00--focus",      Mod_Shift|Mod_Cmd, kVK_ANSI_5},
+                            ]);
+
     #insert #run yabai_bind("window\x00--toggle\x00zoom-fullscreen", Mod_Alt, kVK_ANSI_F);
+    #insert #run yabai_bind("window\x00--toggle\x00zoom-parent", Mod_Alt, kVK_ANSI_D);
+    #insert #run yabai_bind("window\x00--toggle\x00split", Mod_Alt, kVK_ANSI_E);
+    #insert #run yabai_bind("window\x00--toggle\x00sticky", Mod_Alt, kVK_ANSI_S);
+    #insert #run yabai_bind("window\x00--toggle\x00pip", Mod_Alt, kVK_ANSI_P);
+    #insert #run yabai_bind("window\x00--toggle\x00float\x00--grid\x004:4:1:1:2:2",  Mod_Alt, kVK_ANSI_T);
+
+    #insert #run yabai_bind("space\x00--focus", .[
+                                .{"recent", Mod_Cmd|Mod_Alt, kVK_ANSI_X},
+                                .{"prev",   Mod_Cmd|Mod_Alt, kVK_ANSI_Z},
+                                .{"next",   Mod_Cmd|Mod_Alt, kVK_ANSI_C},
+                                .{"1",      Mod_Cmd|Mod_Alt, kVK_ANSI_1},
+                                .{"2",      Mod_Cmd|Mod_Alt, kVK_ANSI_2},
+                                .{"3",      Mod_Cmd|Mod_Alt, kVK_ANSI_3},
+                                .{"4",      Mod_Cmd|Mod_Alt, kVK_ANSI_4},
+                                .{"5",      Mod_Cmd|Mod_Alt, kVK_ANSI_5},
+                            ]);
 
     #insert #run yabai_bind("space\x00--equalize", Mod_Shift|Mod_Cmd, kVK_ANSI_I);
     #insert #run yabai_bind("space\x00--balance",  Mod_Shift|Mod_Alt, kVK_ANSI_I);
+    #insert #run yabai_bind("space\x00--toggle\x00padding\x00--toggle\x00gap",  Mod_Alt, kVK_ANSI_A);
 }
 
 check_privileges :: inline () -> success: bool {
