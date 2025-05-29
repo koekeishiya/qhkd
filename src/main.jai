@@ -333,13 +333,13 @@ event_tap_begin :: () -> success: bool {
     return result;
 }
 
-Multi_Bind :: struct {
+Yabai_Bind :: struct {
     selector: string;
     flags:    u64;
     key:      u16;
 }
 
-multi_bind :: (command: string, mb: []Multi_Bind) -> string {
+yabai_bind :: (command: string, mb: []Yabai_Bind) -> string {
     sb: String_Builder;
 
     for mb {
@@ -358,6 +358,32 @@ multi_bind :: (command: string, mb: []Multi_Bind) -> string {
     return builder_to_string(*sb);
 }
 
+yabai_bind :: (command: string, flags: u64, key: u16) -> string {
+    s := #string DONE
+    array_add(*hotkeys, .{
+        key    = %,
+        flags  = %,
+        action = () {
+            yabai("%");
+        }
+    });
+    DONE
+    return tprint(s, key, flags, command);
+}
+
+shell_bind :: (command: string, flags: u64, key: u16) -> string {
+    s := #string DONE
+    array_add(*hotkeys, .{
+        key    = %,
+        flags  = %,
+        action = () {
+            shell("%");
+        }
+    });
+    DONE
+    return tprint(s, key, flags, command);
+}
+
 Hotkey :: struct {
     key:   u16;
     flags: u64;
@@ -365,23 +391,11 @@ Hotkey :: struct {
 } hotkeys: [..]Hotkey;
 
 add_hotkeys :: () {
-    array_add(*hotkeys, .{
-        key    = kVK_Return,
-        flags  = Mod_Cmd,
-        action = () {
-            shell("kitty --single-instance -d ~ &> /dev/null");
-        }
-    });
+    #insert #run shell_bind("kitty --single-instance -d ~ &> /dev/null", Mod_Cmd, kVK_Return);
 
-    array_add(*hotkeys, .{
-        key    = kVK_ANSI_S,
-        flags  = Mod_Shift|Mod_Cmd,
-        action = () {
-            shell("screencapture -i -c");
-        }
-    });
+    #insert #run shell_bind("screencapture -i -c", Mod_Shift|Mod_Cmd, kVK_ANSI_S);
 
-    #insert #run multi_bind("window\x00--focus", .[
+    #insert #run yabai_bind("window\x00--focus", .[
                                 .{"west",    Mod_Alt, kVK_ANSI_H},
                                 .{"south",   Mod_Alt, kVK_ANSI_J},
                                 .{"north",   Mod_Alt, kVK_ANSI_K},
@@ -389,7 +403,7 @@ add_hotkeys :: () {
                                 .{"recent",  Mod_Alt, kVK_ANSI_X},
                             ]);
 
-    #insert #run multi_bind("window\x00--swap", .[
+    #insert #run yabai_bind("window\x00--swap", .[
                                 .{"west",   Mod_Shift|Mod_Alt, kVK_ANSI_H},
                                 .{"south",  Mod_Shift|Mod_Alt, kVK_ANSI_J},
                                 .{"north",  Mod_Shift|Mod_Alt, kVK_ANSI_K},
@@ -397,7 +411,7 @@ add_hotkeys :: () {
                                 .{"recent", Mod_Shift|Mod_Alt, kVK_ANSI_X},
                             ]);
 
-    #insert #run multi_bind("window\x00--warp", .[
+    #insert #run yabai_bind("window\x00--warp", .[
                                 .{"west",   Mod_Shift|Mod_Cmd, kVK_ANSI_H},
                                 .{"south",  Mod_Shift|Mod_Cmd, kVK_ANSI_J},
                                 .{"north",  Mod_Shift|Mod_Cmd, kVK_ANSI_K},
@@ -405,13 +419,10 @@ add_hotkeys :: () {
                                 .{"recent", Mod_Shift|Mod_Cmd, kVK_ANSI_X},
                             ]);
 
-    array_add(*hotkeys, .{
-        key    = kVK_ANSI_F,
-        flags  = Mod_Alt,
-        action = () {
-            yabai("window\x00--toggle\x00zoom-fullscreen");
-        }
-    });
+    #insert #run yabai_bind("window\x00--toggle\x00zoom-fullscreen", Mod_Alt, kVK_ANSI_F);
+
+    #insert #run yabai_bind("space\x00--equalize", Mod_Shift|Mod_Cmd, kVK_ANSI_I);
+    #insert #run yabai_bind("space\x00--balance",  Mod_Shift|Mod_Alt, kVK_ANSI_I);
 }
 
 check_privileges :: inline () -> success: bool {
