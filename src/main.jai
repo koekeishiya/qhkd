@@ -340,28 +340,21 @@ Multi_Bind :: struct {
 }
 
 multi_bind :: (command: string, mb: []Multi_Bind) -> string {
-    __multi_bind :: (command: string, mb: []Multi_Bind) -> []string {
-        result: [..]string;
+    sb: String_Builder;
 
-        for mb {
-            s := #string DONE
-            array_add(*hotkeys, .{
-                key    = %,
-                flags  = %,
-                action = () {
-                    yabai("%\x00%");
-                }
-            });
-            DONE
-            array_add(*result, tprint(s, it.key, it.flags, command, it.selector));
-        }
-
-        return result;
+    for mb {
+        s := #string DONE
+        array_add(*hotkeys, .{
+            key    = %,
+            flags  = %,
+            action = () {
+                yabai("%\x00%");
+            }
+        });
+        DONE
+        append(*sb, tprint(s, it.key, it.flags, command, it.selector));
     }
 
-    sb: String_Builder;
-    lines := __multi_bind(command, mb);
-    for lines append(*sb, it);
     return builder_to_string(*sb);
 }
 
