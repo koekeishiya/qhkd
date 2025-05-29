@@ -335,6 +335,16 @@ event_tap_begin :: () -> success: bool {
     return result;
 }
 
+bind :: (action: Code, flags: u64, key: u16) #expand {
+    array_add(*hotkeys, .{
+        key    = key,
+        flags  = flags,
+        action = () {
+            #insert action;
+        }
+    });
+}
+
 bind :: (action: string, flags: u64, key: u16) -> string {
     s := #string DONE
     array_add(*hotkeys, .{
@@ -358,20 +368,7 @@ yabai_bind :: (command: string, flags: u64, key: u16) -> string {
 
 yabai_bind :: (command: string, mb: []Yabai_Bind) -> string {
     sb: String_Builder;
-
-    for mb {
-        s := #string DONE
-        array_add(*hotkeys, .{
-            key    = %,
-            flags  = %,
-            action = () {
-                yabai("%\x00%");
-            }
-        });
-        DONE
-        append(*sb, tprint(s, it.key, it.flags, command, it.selector));
-    }
-
+    for mb append(*sb, yabai_bind(tprint("%\x00%", command, it.selector), it.flags, it.key));
     return builder_to_string(*sb);
 }
 
@@ -391,25 +388,25 @@ add_hotkeys :: () {
     #insert #run shell_bind("kitty --single-instance -d ~ &> /dev/null", Mod_Cmd, kVK_Return);
     #insert #run shell_bind("screencapture -i -c", Mod_Shift|Mod_Cmd, kVK_ANSI_S);
 
-    #insert #run bind(#string DONE
+    bind(#code {
         success, rsp := yabai("window\x00--toggle\x00music");
         if !success shell("open -a Music");
-    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_M);
+    }, Mod_Cmd|Mod_Alt, kVK_ANSI_M);
 
-    #insert #run bind(#string DONE
+    bind(#code {
         success, rsp := yabai("window\x00--toggle\x00spotify");
         if !success shell("open -a Spotify");
-    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_S);
+    }, Mod_Cmd|Mod_Alt, kVK_ANSI_S);
 
-    #insert #run bind(#string DONE
+    bind(#code {
         success, rsp := yabai("window\x00--toggle\x00discord");
         if !success shell("open -a Discord");
-    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_D);
+    }, Mod_Cmd|Mod_Alt, kVK_ANSI_D);
 
-    #insert #run bind(#string DONE
+    bind(#code {
         success, rsp := yabai("window\x00--toggle\x00transmission");
         if !success shell("open -a Transmission");
-    DONE, Mod_Cmd|Mod_Alt, kVK_ANSI_T);
+    }, Mod_Cmd|Mod_Alt, kVK_ANSI_T);
 
     #insert #run yabai_bind("window\x00--focus", .[
                                 .{"west",    Mod_Alt, kVK_ANSI_H},
